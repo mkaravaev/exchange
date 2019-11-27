@@ -1,21 +1,21 @@
 # Exchange
 
-**TODO: Add description**
 
-## Installation
+## README
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `exchange` to your list of dependencies in `mix.exs`:
+1. Specs are wrong for `&send_instruction/2` in given assigment
+    1.1 {:ok} is so wired to return, changed to :ok
+    1.2 {:error, reason: any()}, changed to {:error, any()}
+    1.3 args is different in spec and example, changed as in example 
 
-```elixir
-def deps do
-  [
-    {:exchange, "~> 0.1.0"}
-  ]
-end
-```
+2. Data structures chosen for the task
+    2.1 We should use separate storage for :ask and :bid instuctions storage.
+    2.2 I choose ETS :set table as it gives us O(1) for read and write
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/exchange](https://hexdocs.pm/exchange).
+3. App Design
+  * Exchange (API module) - GenServer that holds Storage as state
+  * Storage - Behaviour for CRUD operations
+  * Query - API for Storage
+
+
 
