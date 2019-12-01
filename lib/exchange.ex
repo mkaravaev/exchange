@@ -4,17 +4,12 @@ defmodule Exchange do
   """
   use GenServer
 
+  alias Exchange.Repository
+
   @type exchange :: pid()
   @type book_depth() :: integer()
   @type output :: list(map())
-  @type instruction_action :: :new | :update | :delete
-  @type event :: %{
-    instruction: instruction_action(),
-    side: :bid | :ask,
-    price_level_index: integer(),
-    price: float(),
-    quantity: integer()
-  }
+  @type event :: Exchange.Event.t()
 
   @storage Application.get_env(:exchange, :storage)
 
@@ -23,8 +18,16 @@ defmodule Exchange do
   end
 
   @spec send_instruction(exchange, event) :: :ok | {:error, any()}
-  def send_instruction(pid, event) do
+  def send_instruction(pid, %Exchange.Event{} = event) do
     GenServer.call(pid, {:exec_instr, event})
+  end
+
+  @spec send_instruction(exchange, map()) :: :ok | {:error, any()}
+  def send_instruction(pid, event) do
+    GenServer.call(pid, {
+      :exec_instr,
+      struct(Exchange.Event, event)
+    })
   end
 
   @spec order_book(exchange(), book_depth()) :: output()
@@ -39,18 +42,21 @@ defmodule Exchange do
 
   @impl true
   def handle_call({:exec_instr, %{instruction: :new} = event}, _from, state) do
+    Repository.insert(state, event)
     {:reply, :ok, state}
   end
 
-  def handle_call({:exec_instr, %{instruction: :delete}}, _from, state) do
+  def handle_call({:exec_instr, %{instruction: :delete} = event}, _from, state) do
+    Repository.delete(state, event)
     {:reply, :ok, state}
   end
 
-  def handle_call({:exec_instr, %{instruction: :update}}, _from, state) do
+  def handle_call({:exec_instr, %{instruction: :update} = event}, _from, state) do
+    Repository.update(state, event)
     {:reply, :ok, state}
   end
 
-  def handle_call({:order_book, depth}, _from, storage) do
-    {:ok, {:ok, %{}}, storage}
+  def handle_call({:order_book, depth}, _from, state) do
+    {:reply, {:ok, Repository.get_order_book(state, depth)}, state}
   end
 end
