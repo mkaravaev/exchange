@@ -26,7 +26,7 @@ defmodule ExchangeTest do
       update_instr = build_instruction(:update, :ask, %{price: 2.0})
       Exchange.send_instruction(context.pid, update_instr)
 
-      [{key, data}] = :ets.lookup(:exchange_ask, 1)
+      [{_key, data}] = :ets.lookup(:exchange_ask, 1)
       assert data.ask_price == 2.0
     end
 
@@ -38,7 +38,7 @@ defmodule ExchangeTest do
       Exchange.send_instruction(context.pid, update_instr)
 
 
-      [{key, data}] = :ets.lookup(:exchange_bid, 1)
+      [{_key, data}] = :ets.lookup(:exchange_bid, 1)
       assert data.bid_price == 2.0
     end
 
@@ -49,7 +49,6 @@ defmodule ExchangeTest do
   end
 
   describe "&send_instruction/2 :delete" do
-    @tag :f
     test "should delete ask entry", context do
       instr = build_instruction(:new, :ask)
       Exchange.send_instruction(context.pid, instr)
@@ -95,9 +94,13 @@ defmodule ExchangeTest do
       assert %{ask_price: 1, bid_price: 1} = first
       assert %{ask_price: 8, bid_price: nil} = List.last(tail)
     end
+
+    test "should return error if depth level is wrong", context do
+      assert {:error, :depth_not_valid} = Exchange.order_book(context.pid, 18)
+    end
   end
 
-  defp init_storage(context) do
+  defp init_storage(_context) do
     {:ok, pid} = Exchange.start_link()
     [pid: pid]
   end

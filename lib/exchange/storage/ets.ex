@@ -16,14 +16,18 @@ defmodule Exchange.Storage.ETS do
 
   @impl true
   def insert(table_name, key, payload) do
-    :ets.insert(table_name, {key, payload})
+    case :ets.insert(table_name, {key, payload}) do
+      true -> :ok
+      false -> {:error, :cant_insert}
+    end
+
   end
 
   @impl true
   def update(table_name, key, payload) do
     case get(table_name, key) do
       nil -> {:error, :price_level_not_exist}
-      _ -> :ets.insert(table_name, {key, payload})
+      _ -> insert(table_name, key, payload)
     end
   end
 
@@ -62,6 +66,10 @@ defmodule Exchange.Storage.ETS do
     delete(table_name, index)
     insert(table_name, index - 1, data)
     get(table_name, index + 1)
+  end
+
+  def current_depth(table_name) do
+    :ets.info(table_name)[:size]
   end
 
   def next(_table_name, nil), do: nil

@@ -42,21 +42,18 @@ defmodule Exchange do
 
   @impl true
   def handle_call({:exec_instr, %{instruction: :new} = event}, _from, state) do
-    Repository.insert(state, event)
-    {:reply, :ok, state}
+    {:reply, Repository.insert(state, event), state}
   end
 
   def handle_call({:exec_instr, %{instruction: :delete} = event}, _from, state) do
-    Repository.delete(state, event)
-    {:reply, :ok, state}
+    {:reply, Repository.delete(state, event), state}
   end
 
   def handle_call({:exec_instr, %{instruction: :update} = event}, _from, state) do
-    reply = Repository.update(state, event)
-    {:reply, reply, state}
+    {:reply, Repository.update(state, event), state}
   end
 
   def handle_call({:order_book, depth}, _from, state) do
-    {:reply, {:ok, Repository.get_order_book(state, depth)}, state}
+    {:reply, Repository.get_order_book(state, depth), state}
   end
 end

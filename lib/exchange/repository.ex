@@ -1,13 +1,5 @@
 defmodule Exchange.Repository do
 
-  def do_apply(storage, command, %{side: side} = event, opts\\nil) do
-    {key, payload} = storage.serializer.serialize(event)
-    opts = opts || [key, payload]
-    table = choose_table_by_side(storage, side)
-
-    apply(storage.module, command, [table | opts])
-  end
-
   def insert(storage, event), do: do_apply(storage, :insert, event)
 
   def update(storage, event), do: do_apply(storage, :update, event)
@@ -17,8 +9,17 @@ defmodule Exchange.Repository do
   end
 
   def get_order_book(storage, depth) do
-    traverse(storage, depth)
-    |> storage.serializer.serialize_response
+    case valid_depth?(storage, depth) do
+      true ->
+        resp =
+          traverse(storage, depth)
+          |> storage.serializer.serialize_response
+
+        {:ok, resp}
+
+      false ->
+        {:error, :depth_not_valid}
+    end
   end
 
   def traverse(storage, depth) do
@@ -38,6 +39,14 @@ defmodule Exchange.Repository do
     end
   end
 
+  defp valid_depth?(storage, depth) do
+    cond do
+      depth <= apply(storage.module, :current_depth, [storage.ask_storage]) -> true
+      depth <= apply(storage.module, :current_depth, [storage.bid_storage]) -> true
+      true -> false
+    end
+  end
+
   defp get_next(%{module: mod} = storage, {ask, bid}) do
     {
       apply(mod, :next, [storage.ask_storage, ask]),
@@ -47,6 +56,14 @@ defmodule Exchange.Repository do
 
   defp get_first(storage, table) do
     apply(storage.module, :first, [table])
+  end
+
+  defp do_apply(storage, command, %{side: side} = event, opts\\nil) do
+    {key, payload} = storage.serializer.serialize(event)
+    opts = opts || [key, payload]
+    table = choose_table_by_side(storage, side)
+
+    apply(storage.module, command, [table | opts])
   end
 
   defp choose_table_by_side(storage, :ask), do: storage.ask_storage
