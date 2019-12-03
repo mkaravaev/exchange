@@ -21,7 +21,10 @@ defmodule Exchange.Storage.ETS do
 
   @impl true
   def update(table_name, key, payload) do
-    :ets.insert(table_name, {key, payload})
+    case get(table_name, key) do
+      nil -> {:error, :price_level_not_exist}
+      _ -> :ets.insert(table_name, {key, payload})
+    end
   end
 
   @impl true

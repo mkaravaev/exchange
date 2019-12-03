@@ -41,6 +41,11 @@ defmodule ExchangeTest do
       [{key, data}] = :ets.lookup(:exchange_bid, 1)
       assert data.bid_price == 2.0
     end
+
+    test "should return error if entry not exist", context do
+      instr = build_instruction(:update, :bid, %{price: 1.0})
+      assert {:error, :price_level_not_exist} = Exchange.send_instruction(context.pid, instr)
+    end
   end
 
   describe "&send_instruction/2 :delete" do

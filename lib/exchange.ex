@@ -52,8 +52,8 @@ defmodule Exchange do
   end
 
   def handle_call({:exec_instr, %{instruction: :update} = event}, _from, state) do
-    Repository.update(state, event)
-    {:reply, :ok, state}
+    reply = Repository.update(state, event)
+    {:reply, reply, state}
   end
 
   def handle_call({:order_book, depth}, _from, state) do
